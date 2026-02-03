@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import generic
@@ -49,8 +50,11 @@ class OrderCreateView(generic.CreateView):
         # Get the object before saving to DB.
         order = form.save(commit=False)
 
-        # Attach user to order instance.
-        order.user = self.request.user
+        # Attach user to order instance. If the requesting user is anonymous, we sub in the superuser for now.
+        if not self.request.user.is_authenticated:
+            order.user = User.objects.get(id=1)
+        else:
+            order.user = self.request.user
 
         # Save the rate associated with the term.
         data = get_yield_data()
