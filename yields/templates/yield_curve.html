@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Treasury Yield Curve{% endblock %}
+
+{% block extra_head %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            height: 420px;
+        }
+
+        .chart-card {
+            margin-top: 8px;
+        }
+
+        .chart-actions {
+            margin-top: 12px;
+            justify-content: flex-start;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h1>US Treasury Yield Curve</h1>
+            <p class="subtle">Date: <strong>{{ date }}</strong></p>
+        </div>
+        <div class="actions">
+            <a class="btn btn-primary" href="{% url "yields:order" %}">Place an Order</a>
+            <a class="btn" href="{% url "yields:history" %}">View past orders</a>
+        </div>
+    </div>
+
+    <div class="card chart-card">
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="yieldCurveChart"></canvas>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        const rawData = {{ data|safe }};
+        const {date, ...rates} = rawData;
+
+        const labels = Object.keys(rates);
+        const values = Object.values(rates).map(v => v !== null ? parseFloat(v) : null);
+
+        const ctx = document.getElementById("yieldCurveChart").getContext("2d");
+
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Yield (%)",
+                    data: values,
+                    tension: 0.3,
+                    pointRadius: 4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Term"
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Yield"
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

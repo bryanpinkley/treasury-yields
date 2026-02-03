@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Submit an Order{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .rate-box {
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #f8fafc;
+            margin-bottom: 12px;
+        }
+
+        .rate-box .label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .rate-box .value {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .rate-box .meta {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .money-preview {
+            margin-top: -6px;
+            margin-bottom: 12px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .money-preview strong {
+            color: var(--text);
+            font-weight: 800;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h1>Submit an Order</h1>
+            <p class="subtle">Select your desired term, enter the amount, and click submit.</p>
+        </div>
+        <div class="actions">
+            <a class="btn btn-ghost" href="{% url "yields:yield_curve" %}">Cancel</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <div class="rate-box">
+                <div>
+                    <div class="label">Selected term rate</div>
+                    <div class="meta">As of {{ yield_date }}</div>
+                </div>
+                <div class="value" id="selectedRate">—</div>
+            </div>
+
+            {{ rates_by_term_value|json_script:"rates-by-term" }}
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {{ form.as_p }}
+
+                <div class="money-preview" id="amountPreviewWrap" style="display:none;">
+                    Formatted amount: <strong id="amountPreview">$0.00</strong>
+                </div>
+
+                <div class="actions" style="margin-top: 12px;">
+                    <a class="btn" href="{% url "yields:yield_curve" %}">Back</a>
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const termSelect = document.getElementById("id_term");
+            const rateEl = document.getElementById("selectedRate");
+            const rates = JSON.parse(document.getElementById("rates-by-term").textContent);
+
+            const amountInput = document.getElementById("id_amount");
+            const amountPreviewWrap = document.getElementById("amountPreviewWrap");
+            const amountPreview = document.getElementById("amountPreview");
+
+            const usd = new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            function formatRate(v) {
+                if (v === null || v === undefined || v === "") return "—";
+                const n = Number(v);
+                if (Number.isFinite(n)) return n.toFixed(2) + "%";
+                return String(v) + "%";
+            }
+
+            function updateRate() {
+                if (!termSelect) return;
+                const key = termSelect.value;
+                rateEl.textContent = formatRate(rates[key]);
+            }
+
+            function updateAmountPreview() {
+                if (!amountInput) return;
+
+                const raw = (amountInput.value || "").trim();
+                if (!raw) {
+                    amountPreviewWrap.style.display = "none";
+                    return;
+                }
+
+                const n = Number(raw);
+                if (!Number.isFinite(n)) {
+                    amountPreviewWrap.style.display = "none";
+                    return;
+                }
+
+                amountPreview.textContent = usd.format(n);
+                amountPreviewWrap.style.display = "block";
+            }
+
+            if (termSelect) {
+                termSelect.addEventListener("change", updateRate);
+                updateRate();
+            }
+
+            if (amountInput) {
+                amountInput.addEventListener("input", updateAmountPreview);
+                amountInput.addEventListener("change", updateAmountPreview);
+                updateAmountPreview();
+            }
+        })();
+    </script>
+{% endblock %}

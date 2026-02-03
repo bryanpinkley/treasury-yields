@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Past Order List{% endblock %}
+
+{% block content %}
+    <div class="header">
+        <div>
+            <h1>Orders</h1>
+            <p class="subtle">All submitted orders (most recent first).</p>
+        </div>
+        <div class="actions">
+            <a class="btn" href="{% url "yields:yield_curve" %}">← Back to Yield Curve</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if object_list %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Term</th>
+                            <th>Amount</th>
+                            <th>Rate</th>
+                            <th>Submitted</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for order in object_list %}
+                            <tr>
+                                <td>{{ order.id }}</td>
+                                <td>{{ order.user }}</td>
+                                <td>{{ order.term_m_y }}</td>
+                                <td>{{ order.amount_in_dollars }}</td>
+                                <td>{{ order.rate_in_percent }}</td>
+                                <td>{{ order.submitted_time }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="subtle">No orders have been submitted yet.</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
