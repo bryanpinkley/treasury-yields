@@ -27,7 +27,7 @@ class Order(models.Model):
     @property
     def amount_in_dollars(self):
         """Return the amount in a dollar string"""
-        return f"${self.amount}"
+        return f"${self.amount:,.2f}"
 
     @property
     def rate_in_percent(self):
